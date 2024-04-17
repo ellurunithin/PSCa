@@ -27,6 +27,29 @@ cur.execute("""
     )
 """)
 conn.commit()
+# Create enrolled_courses table if not exists
+cur.execute("""
+    CREATE TABLE IF NOT EXISTS enroll_course (
+        id SERIAL PRIMARY KEY,
+        student_username VARCHAR(50),  -- Change data type to VARCHAR to store usernames
+        course_id INTEGER REFERENCES courses(id)
+    )
+""")
+conn.commit()
+
+
+# Create courses table if not exists
+cur.execute("""
+    CREATE TABLE IF NOT EXISTS courses (
+        id SERIAL PRIMARY KEY,
+        course_name VARCHAR(100) NOT NULL,
+        course_code VARCHAR(20) NOT NULL,
+        course_description TEXT NOT NULL,
+        start_date DATE NOT NULL,
+        end_date DATE NOT NULL
+    )
+""")
+conn.commit()
 
 @app.route('/')
 def login():
@@ -77,13 +100,136 @@ def signup():
         return render_template('signup.html', error=error_message)
 
 
-@app.route('/student_dashboard')
-def student_dashboard():
-    return render_template('student_dashboard.html')
+# @app.route('/student_dashboard')
+# def student_dashboard():
+#     return render_template('student_dashboard.html')
 
 @app.route('/teacher_dashboard')
 def teacher_dashboard():
     return render_template('teacher_dashboard.html')
+@app.route('/course_creation', methods=['GET', 'POST'])
+def course_creation():
+    if request.method == 'POST':
+        course_name = request.form['course_name']
+        course_code = request.form['course_code']
+        course_description = request.form['course_description']
+        start_date = request.form['start_date']
+        end_date = request.form['end_date']
+
+        cur = conn.cursor()
+
+        try:
+            cur.execute("INSERT INTO courses (course_name, course_code, course_description, start_date, end_date) VALUES (%s, %s, %s, %s, %s)", (course_name, course_code, course_description, start_date, end_date))
+            conn.commit()
+            print("Course {} created successfully!".format(course_name))
+            return redirect(url_for('teacher_dashboard'))
+        except psycopg2.Error as e:
+            conn.rollback()
+            error_message = "Error occurred while creating the course. Please try again."
+            print("Error occurred while creating the course:", e)
+            return render_template('course_creation.html', error=error_message)
+
+    else:
+        return render_template('course_creation.html')
+# Create a route to handle the form submission
+@app.route('/create_course', methods=['POST'])
+def create_course():
+    if request.method == 'POST':
+        course_name = request.form['course_name']
+        course_code = request.form['course_code']
+        course_description = request.form['course_description']
+        start_date = request.form['start_date']
+        end_date = request.form['end_date']
+
+        # Insert the course details into the database
+        cur = conn.cursor()
+        try:
+            cur.execute("INSERT INTO courses (course_name, course_code, course_description, start_date, end_date) VALUES (%s, %s, %s, %s, %s)", (course_name, course_code, course_description, start_date, end_date))
+            conn.commit()
+            print("Course {} created successfully!".format(course_name))
+            return redirect(url_for('teacher_dashboard'))  # Redirect to teacher dashboard after successful submission
+        except psycopg2.Error as e:
+            conn.rollback()
+            error_message = "Error occurred while creating the course. Please try again."
+            print("Error occurred while creating the course:", e)
+            # You can handle the error as needed, such as displaying an error message to the user
+            return render_template('error.html', error=error_message)
+# Function to fetch courses from the database
+def fetch_courses():
+    try:
+        conn = psycopg2.connect(
+            dbname="postgres",
+            user="postgres",
+            password="newpassword",
+            host="localhost",
+            port="5432"
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM courses")
+        courses = cur.fetchall()
+        cur.close()
+        conn.close()
+        return courses
+    except psycopg2.Error as e:
+        print("Error fetching courses:", e)
+        return None
+
+@app.route('/student_dashboard')
+def student_dashboard():
+    courses = fetch_courses()
+    # Fetch student's username from the database (replace this with your actual query)
+    student_username = get_student_username()  # Implement get_student_username() function to retrieve the student's username
+    if courses and student_username:
+        return render_template('student_dashboard.html', courses=courses, student_username=student_username)
+    else:
+        return "Error fetching courses or student username. Please try again later."
+
+# Function to fetch student's username from the database
+def get_student_username():
+    try:
+        conn = psycopg2.connect(
+            dbname="postgres",
+            user="postgres",
+            password="newpassword",
+            host="localhost",
+            port="5432"
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users WHERE role = 'student' LIMIT 1")  # Assuming there's only one student in the database
+        student_username = cur.fetchone()[0]  # Fetch the first student's username
+        cur.close()
+        conn.close()
+        return student_username
+    except psycopg2.Error as e:
+        print("Error fetching student username:", e)
+        return None
+@app.route('/enroll_course', methods=['POST'])
+def enroll_course():
+    if request.method == 'POST':
+        if 'username' in request.form:  # Assuming username is stored in the session upon login
+            student_id = request.form['username']
+            course_id = request.form['course_id']
+
+            try:
+                conn = psycopg2.connect(
+                    dbname="postgres",
+                    user="postgres",
+                    password="newpassword",
+                    host="localhost",
+                    port="5432"
+                )
+                cur = conn.cursor()
+                cur.execute("INSERT INTO enroll_course (student_id, course_id) VALUES (%s, %s)", (student_id, course_id))
+                conn.commit()
+                cur.close()
+                conn.close()
+                return "Course enrolled successfully!"
+            except psycopg2.Error as e:
+                print("Error enrolling course:", e)
+                return "Error enrolling course. Please try again later."
+        else:
+            return "User not logged in. Please log in to enroll in courses."
+
 
 if __name__ == '__main__':
     app.run(debug=True)
