@@ -4,13 +4,17 @@ import psycopg2
 app = Flask(__name__)
 
 # Connect to PostgreSQL database
-conn = psycopg2.connect(
-    dbname="postgres",
-    user="postgres",
-    password="newpassword",
-    host="localhost",
-    port="5432"
-)
+try:
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="postgres",
+        password="newpassword",
+        host="localhost",
+        port="5432"
+    )
+    print("Connected to the database successfully!")
+except psycopg2.Error as e:
+    print("Unable to connect to the database:", e)
 
 # Create users table if not exists
 cur = conn.cursor()
@@ -64,10 +68,12 @@ def signup():
     try:
         cur.execute("INSERT INTO users (username, password, role) VALUES (%s, %s, %s)", (username, password, role))
         conn.commit()
+        print("User {} signed up successfully!".format(username))
         return redirect(url_for('login'))
     except psycopg2.Error as e:
         conn.rollback()
         error_message = "Error occurred while signing up. Please try again."
+        print("Error occurred while signing up:", e)
         return render_template('signup.html', error=error_message)
 
 
