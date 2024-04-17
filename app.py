@@ -229,7 +229,37 @@ def enroll_course():
                 return "Error enrolling course. Please try again later."
         else:
             return "User not logged in. Please log in to enroll in courses."
+@app.route('/create_thread', methods=['POST'])
+def create_thread():
+    course_id = request.form['course_id']
+    title = request.form['thread_title']
+    author = request.form['author']
+    initial_post = request.form['initial_post']
+    
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO threads (course_id, title, author, initial_post) VALUES (?, ?, ?, ?)",
+                   (course_id, title, author, initial_post))
+    conn.commit()
+    conn.close()
+    
+    return redirect(url_for('discussion', course_id=course_id))
 
+@app.route('/reply', methods=['POST'])
+def reply():
+    course_id = request.form['course_id']
+    thread_id = request.form['thread_id']
+    author = request.form['author']
+    reply_text = request.form['reply']
+    
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO replies (thread_id, author, reply_text) VALUES (?, ?, ?)",
+                   (thread_id, author, reply_text))
+    conn.commit()
+    conn.close()
+    
+    return redirect(url_for('discussion', course_id=course_id))
 
 if __name__ == '__main__':
     app.run(debug=True)
