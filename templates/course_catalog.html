@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Student Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Catalog</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,21 +24,26 @@
             color: #343a40;
         }
 
-        h2 {
-            color: #343a40;
-        }
-
         ul {
             list-style-type: none;
             padding: 0;
         }
 
         li {
-            margin-bottom: 10px;
             background-color: #ffffff;
-            padding: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
             border-radius: 5px;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #007bff;
+        }
+
+        p {
+            margin-bottom: 10px;
         }
 
         form {
@@ -60,16 +67,20 @@
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to Student Dashboard</h1>
-        <h2>Available Courses:</h2>
+        <h1>Course Catalog</h1>
         <ul>
             {% for course in courses %}
-                <li>{{ course[1] }} - {{ course[2] }}</li> <!-- Assuming course_name is at index 1 and course_code is at index 2 -->
-                <form action="/enroll_course" method="post">
-                    <input type="hidden" name="username" value="{{ student_username }}">
-                    <input type="hidden" name="course_id" value="{{ course[0] }}"> <!-- Assuming course_id is at index 0 -->
+            <li>
+                <h2>{{ course.course_name }}</h2>
+                <p><strong>Course Code:</strong> {{ course.course_code }}</p>
+                <p><strong>Description:</strong> {{ course.course_description }}</p>
+                <p><strong>Start Date:</strong> {{ course.start_date }}</p>
+                <p><strong>End Date:</strong> {{ course.end_date }}</p>
+                <form action="/enroll" method="post">
+                    <input type="hidden" name="course_id" value="{{ course.id }}">
                     <button type="submit">Enroll</button>
                 </form>
+            </li>
             {% endfor %}
         </ul>
     </div>
