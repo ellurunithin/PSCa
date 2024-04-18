@@ -65,11 +65,11 @@
         <ul>
             {% for course in courses %}
                 <li>{{ course[1] }} - {{ course[2] }}</li> <!-- Assuming course_name is at index 1 and course_code is at index 2 -->
-                <form action="/enroll_course" method="post">
-                    <input type="hidden" name="username" value="{{ student_username }}">
-                    <input type="hidden" name="course_id" value="{{ course[0] }}"> <!-- Assuming course_id is at index 0 -->
-                    <button type="submit">Enroll</button>
-                </form>
+                    <form action="/enroll_course" method="POST">
+                        <input type="hidden" name="username" value="{{ student_username }}">
+                        <input type="hidden" name="course_id" value="{{ course.id }}">
+                        <button type="submit">Enroll</button>
+                    </form>
             {% endfor %}
         </ul>
     </div>

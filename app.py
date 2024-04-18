@@ -195,7 +195,7 @@ def get_student_username():
             port="5432"
         )
         cur = conn.cursor()
-        cur.execute("SELECT username FROM users WHERE role = 'student' LIMIT 1")  # Assuming there's only one student in the database
+        cur.execute("SELECT username FROM users WHERE role = 'student'")  # Assuming there's only one student in the database
         student_username = cur.fetchone()[0]  # Fetch the first student's username
         cur.close()
         conn.close()
@@ -206,29 +206,22 @@ def get_student_username():
 @app.route('/enroll_course', methods=['POST'])
 def enroll_course():
     if request.method == 'POST':
-        if 'username' in request.form:  # Assuming username is stored in the session upon login
-            student_id = request.form['username']
-            course_id = request.form['course_id']
+        print("Form Data:", request.form)
+        if 'username' in request.form and 'course_id' in request.form:
+            student_username = request.form['username']
+            course_id = request.form['course_code']
 
+            cur = conn.cursor()
             try:
-                conn = psycopg2.connect(
-                    dbname="postgres",
-                    user="postgres",
-                    password="newpassword",
-                    host="localhost",
-                    port="5432"
-                )
-                cur = conn.cursor()
-                cur.execute("INSERT INTO enroll_course (student_id, course_id) VALUES (%s, %s)", (student_id, course_id))
+                cur.execute("INSERT INTO enroll_course (student_username, course_code) VALUES (%s, %s)", (student_username, course_id))
                 conn.commit()
                 cur.close()
-                conn.close()
-                return "Course enrolled successfully!"
+                return redirect(url_for('student_dashboard'))  # Redirect to student dashboard after enrollment
             except psycopg2.Error as e:
                 print("Error enrolling course:", e)
                 return "Error enrolling course. Please try again later."
         else:
-            return "User not logged in. Please log in to enroll in courses."
+            return "Incomplete data. Please provide both username and course_id."
 
 
 if __name__ == '__main__':
