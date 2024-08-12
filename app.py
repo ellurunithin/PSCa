@@ -16,7 +16,7 @@ try:
 except psycopg2.Error as e:
     print("Unable to connect to the database:", e)
 
-# Create users table if not exist
+# Create users table if not 
 cur = conn.cursor()
 cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
